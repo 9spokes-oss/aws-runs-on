@@ -1,55 +1,54 @@
 output "name" {
-  value       = one(module.cloudformation_stack[*].name)
-  description = "Name of the CloudFormation Stack"
+  value       = one(module.runs_on[*].stack.name)
+  description = "Name of the RunsOn stack"
 }
 
-output "id" {
-  value       = one(module.cloudformation_stack[*].id)
-  description = "ID of the CloudFormation Stack"
+output "getting_started" {
+  value       = one(module.runs_on[*].stack.getting_started)
+  description = "Post-apply instructions, including the URL that starts the GitHub App setup"
 }
 
-output "outputs" {
-  value       = one(module.cloudformation_stack[*].outputs)
-  description = "Outputs of the CloudFormation Stack"
+output "stack" {
+  value       = one(module.runs_on[*].stack)
+  description = "RunsOn stack metadata and operator-facing entrypoints"
 }
 
-output "vpc_id" {
-  value       = local.vpc_id
-  description = "ID of the VPC created by RunsOn CloudFormation Stack"
+output "ingress" {
+  value       = one(module.runs_on[*].ingress)
+  description = "RunsOn public ingress endpoints (setup, health and webhook URLs)"
 }
 
-output "vpc_cidr" {
-  value       = local.vpc_cidr_block
-  description = "CIDR of the VPC created by RunsOn CloudFormation Stack"
+output "platform" {
+  value       = one(module.runs_on[*].platform)
+  description = "Shared runner platform resources: cache, networking, runner IAM, logs and launch templates"
 }
 
-output "nat_gateway_ids" {
-  value       = one(data.aws_nat_gateways.ngws[*].ids)
-  description = "NAT Gateway IDs"
+output "runtime" {
+  value       = one(module.runs_on[*].runtime)
+  description = "RunsOn control-plane ECS resources"
 }
 
-# Required by TGW Component but not created by RunsOn CloudFormation Stack
-output "nat_instance_ids" {
-  value       = []
-  description = "NAT Instance IDs"
+output "queues" {
+  value       = one(module.runs_on[*].queues)
+  description = "RunsOn SQS queues"
 }
 
-output "private_subnet_ids" {
-  value       = local.private_subnet_ids
-  description = "Private subnet IDs"
+output "tables" {
+  value       = one(module.runs_on[*].tables)
+  description = "RunsOn DynamoDB tables"
 }
 
-output "public_subnet_ids" {
-  value       = local.public_subnet_ids
-  description = "Public subnet IDs"
+output "alerts" {
+  value       = one(module.runs_on[*].alerts)
+  description = "RunsOn alerting resources"
 }
 
-output "security_group_id" {
-  value       = local.security_group_id
-  description = "Security group ID"
+output "optional_features" {
+  value       = one(module.runs_on[*].optional_features)
+  description = "Optional runner platform features (EFS, ECR, cache isolation)"
 }
 
-output "private_route_table_ids" {
-  value       = local.private_route_table_ids
-  description = "Private subnet route table IDs"
+output "runner_iam_policy_arn" {
+  value       = module.iam_policy.policy_arn
+  description = "ARN of the ECR policy attached to the runner instance role"
 }

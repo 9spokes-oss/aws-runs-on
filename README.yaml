@@ -32,14 +32,25 @@ contributors: [] # If included generates contribs
 description: |
   Component: `runs-on`
 
-  This component provisions RunsOn for GitHub Actions self-hosted runners. After deploying this
-  component, install the RunsOn GitHub App in your organization to enable runner registration.
-  See the RunsOn documentation for GitHub App installation and configuration details.
+  This component provisions [RunsOn](https://runs-on.com/) Flex, ephemeral self-hosted GitHub Actions runners on EC2,
+  with the official [RunsOn Terraform module](https://github.com/runs-on/terraform-aws-runs-on).
+  After deploying it, open the `getting_started` output URL to register the RunsOn GitHub App in your organization.
 
-  Compatibility: Requires RunsOn CloudFormation template version 2.8.2 or newer due to output changes.
+  RunsOn runs in a VPC you manage (for example the `vpc` component). Runners in private subnets need NAT for
+  outbound access to GitHub.
+
+  Compatibility: Version 3 of this component deploys RunsOn v3. Earlier versions wrapped the RunsOn CloudFormation
+  template; see "Migrating from the CloudFormation-based component" below.
 # How to use this project
 usage: |
-  Stack Level: Regional
+  **Stack Level**: Regional
+
+  Store the RunsOn license key as an SSM SecureString in the target account, so it never appears in stack
+  configuration:
+
+  ```shell
+  aws ssm put-parameter --name /runs-on/license-key --type SecureString --value "<LICENSE_KEY>"
+  ```
 
   (`runs-on/defaults.yaml`)
 
@@ -51,37 +62,18 @@ usage: |
           component: runs-on
           type: abstract
         vars:
+          enabled: true
           name: runs-on
-          enabled: true
-          capabilities: ["CAPABILITY_IAM"]
-          on_failure: "ROLLBACK"
-          timeout_in_minutes: 30
-          # template_url: https://runs-on.s3.eu-west-1.amazonaws.com/cloudformation/template.yaml
-          # See latest version and changelog at https://runs-on.com/changelog/
-          template_url: https://runs-on.s3.eu-west-1.amazonaws.com/cloudformation/template-v2.8.3.yaml
-          parameters:
-            AppCPU: 256
-            AppMemory: 512
-            EmailAddress: developer@cloudposse.com
-            # Environments let you run multiple Stacks in one organization and segregate resources.
-            # If you specify an environment, then all the jobs must also specify which environment they are running in.
-            # To keep things simple, we use the default environment ("production") and leave the `env` label unset in the workflow.
-            EncryptEbs: true
-            # With the default value of SSHAllowed: true, the runners that are placed in a public subnet
-            # will allow ingress on port 22. This is highly abused (scanners running constantly looking for vulnerable SSH servers)
-            # and should not be allowed. If you need access to the runners, use Session Manager (SSM).
-            SSHAllowed: false
-            LicenseKey: <LICENSE_KEY>
-            Private: false # always | true | false - Always will default place in private subnet, true will place in private subnet if tag `private=true` present on workflow, false will place in public subnet
-            RunnerLargeDiskSize: 120 # Disk size in GB for disk=large runners
-            Ec2LogRetentionInDays: 30
-            VpcFlowLogRetentionInDays: 14
+          github_organization: acme
+          email: developer@acme.com
+          license_key_ssm_parameter_name: /runs-on/license-key
+          # false: public subnets only; true: private subnets for jobs labelled private=true;
+          # always: private unless a job opts out; only: private subnets only.
+          private_mode: "only"
+          public_subnet_ids: []
+          ebs_encryption_key_id: alias/aws/ebs
+          app_size: small
   ```
-
-  ### Embedded networking (Runs On managed VPC)
-
-  When no VPC details are set, the component will create a new VPC and subnets via the CloudFormation template.
-  Set the `VpcCidrBlock` parameter to the CIDR block of the VPC that will be created.
 
   (`runs-on.yaml`)
 
@@ -95,193 +87,63 @@ usage: |
     terraform:
       runs-on:
         metadata:
+          component: runs-on
           inherits:
             - runs-on/defaults
-          component: runs-on
         vars:
-          networking_stack: embedded
-          parameters:
-            VpcCidrBlock: 10.100.0.0/16
+          vpc_id: !terraform.state vpc vpc_id
+          private_subnet_ids: !terraform.state vpc private_subnet_ids
   ```
 
-  ### External networking (Use existing VPC)
+  After the first apply, print the setup instructions and follow the link to register the GitHub App:
 
-  Use an existing VPC by setting `vpc_id`, `subnet_ids`, and `security_group_id`.
-
-  (`_defaults.yaml`)
-
-  ```yaml
-  terraform:
-    hooks:
-      store-outputs:
-        name: auto/ssm
+  ```shell
+  atmos terraform output runs-on -s <stack> --skip-init -- -raw getting_started
   ```
 
-  (`runs-on.yaml`)
+  Inputs mirror the RunsOn Flex module's, with two exceptions: `stack_name` and `tags` come from the Cloud Posse
+  label context (`module.this.id` and `module.this.tags`), and the module's `environment` input is
+  `runs_on_environment`, because `environment` is a context label.
 
-  ```yaml
-  import:
-    - orgs/acme/core/auto/_defaults
-    - mixins/region/us-east-1
-    - catalog/vpc/defaults
-    - catalog/runs-on/defaults
+  ### Migrating from the CloudFormation-based component (v2.x)
 
-  components:
-    terraform:
-      runs-on:
-        metadata:
-          inherits:
-            - runs-on/defaults
-          component: runs-on
-        vars:
-          networking_stack: external
-          # There are other ways to get the vpc_id, subnet_ids, and security_group_id.
-          # Hardcode
-          # Use Atmos KV Store
-          # Use atmos !terraform.output yaml function
-          vpc_id: !store auto/ssm vpc vpc_id
-          subnet_ids: !store auto/ssm vpc private_subnet_ids
-          security_group_id: !store auto/ssm vpc default_security_group_id
-  ```
+  Version 3 is a breaking change. Terraform cannot adopt resources owned by a CloudFormation stack, so migrating
+  replaces the RunsOn installation:
 
-  <details>
-  <summary>(DEPRECATED) Configuring with Transit Gateway</summary>
-  It's important to note that the embedded networking will require some customization to work with Transit Gateway.
-  The following configuration assumes you are using the Cloud Posse Components for Transit Gateway
-  ([tgw/hub](https://docs.cloudposse.com/components/library/aws/tgw/hub/) &
-  [tgw/spoke](https://docs.cloudposse.com/components/library/aws/tgw/spoke/)).
-  The outputs of this component contain the same outputs as the `vpc` component. This is because the runs-on
-  cloudformation stack creates a VPC and subnets.
-  First we need to update the TGW/Hub - this stores information about the VPCs that are allowed to be used by TGW Spokes.
-  Assuming your TGW/Hub lives in the `core-network` account and your Runs-On is deployed to `core-auto` (`tgw-hub.yaml`)
+  1. Deploy this version as a new component instance (a different `name`) next to the existing stack.
+  2. Register its GitHub App, then move workflows to it.
+  3. Destroy the old CloudFormation-based instance.
 
-  ```yaml
-  vars:
-    connections:
-      - account:
-          tenant: core
-          stage: auto
-        vpc_component_names:
-          - vpc
-          - runs-on
-  ```
+  | v2.x | v3 |
+  |------|----|
+  | `template_url` | removed; the RunsOn version comes from the module version |
+  | `networking_stack: embedded` | removed; pass `vpc_id` and subnets from a VPC you manage |
+  | `parameters.LicenseKey` | `license_key_ssm_parameter_name` (or `license_key`) |
+  | `parameters.GithubOrganization` | `github_organization` |
+  | `parameters.EmailAddress` | `email` |
+  | `parameters.Private` | `private_mode` |
+  | `parameters.SSHAllowed` | `ssh_allowed` |
+  | `parameters.EncryptEbs` | `ebs_encryption_key_id` |
+  | `parameters.Ec2LogRetentionInDays` | `log_retention_days` |
+  | `subnet_ids` | `public_subnet_ids` |
+  | `security_group_id` | `security_group_ids` |
+  | `security_group_rules` | removed; pass your own `security_group_ids` |
+  | `capabilities`, `on_failure`, `timeout_in_minutes`, `policy_body` | removed |
+  | outputs `vpc_id`, `vpc_cidr`, `*_subnet_ids`, `nat_*`, `private_route_table_ids` | removed; read them from the VPC component |
 
-  ```yaml
-  components:
-    terraform:
-      tgw/hub/defaults:
-        metadata:
-          type: abstract
-          component: tgw/hub
-        vars:
-          enabled: true
-          name: tgw-hub
-          tags:
-            Team: sre
-            Service: tgw-hub
+  The ECR policy that v2.x attached to runner instances is still attached by default. Set
+  `ecr_iam_policy_enabled: false` when workflows reach ECR through their own (for example OIDC) role.
 
-      tgw/hub:
-        metadata:
-          inherits:
-            - tgw/hub/defaults
-          component: tgw/hub
-        vars:
-          connections:
-            - account:
-                tenant: core
-                stage: network
-            - account:
-                tenant: core
-                stage: auto
-              vpc_component_names:
-                - vpc
-                - runs-on
-            - account:
-                tenant: plat
-                stage: sandbox
-            - account:
-                tenant: plat
-                stage: dev
-            - account:
-                tenant: plat
-                stage: staging
-            - account:
-                tenant: plat
-                stage: prod
-  ```
-
-  We then need to create a spoke that refers to the VPC created by Runs-On.
-  (`tgw-spoke.yaml`)
-
-  ```yaml
-  tgw/spoke/runs-on:
-    metadata:
-      component: tgw/spoke
-      inherits:
-        - tgw/spoke-defaults
-    vars:
-      own_vpc_component_name: runs-on
-      attributes:
-        - "runs-on"
-      connections:
-        - account:
-            tenant: core
-            stage: network
-        - account:
-            tenant: core
-            stage: auto
-          vpc_component_names:
-            - vpc
-            - runs-on
-        - account:
-            tenant: plat
-            stage: sandbox
-        - account:
-            tenant: plat
-            stage: dev
-        - account:
-            tenant: plat
-            stage: staging
-        - account:
-            tenant: plat
-            stage: prod
-  ```
-
-  Finally we need to update the spokes of the TGW/Spokes to allow Runs-On traffic to the other accounts.
-  Typically this includes `core-auto`, `core-network`, and your platform accounts.
-  (`tgw-spoke.yaml`)
-
-  ```yaml
-    tgw/spoke:
-      metadata:
-        inherits:
-          - tgw/spoke-defaults
-      vars:
-        connections:
-          # ...
-              vpc_component_names:
-                - vpc
-                - runs-on
-          # ...
-  ```
-  </details>
-# Helpful links
 references:
   - name: RunsOn
     description: ""
     url: https://runs-on.com/
-  - name: Install RunsOn GitHub App
+  - name: RunsOn Flex Terraform module
     description: ""
-    url: https://runs-on.com/guides/install/#3-github-app-registration
+    url: https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex
   - name: RunsOn Changelog
     description: ""
     url: https://runs-on.com/changelog/
-  - name: Embedded vs External Networking
+  - name: RunsOn job labels
     description: ""
-    url: https://runs-on.com/networking/embedded-vs-external/
-  - name: Cloud Posse TGW Hub component
-    description: ""
-    url: https://docs.cloudposse.com/components/library/aws/tgw/hub/
-  - name: Cloud Posse TGW Spoke component
-    description: ""
-    url: https://docs.cloudposse.com/components/library/aws/tgw/spoke/
+    url: https://runs-on.com/configuration/job-labels/

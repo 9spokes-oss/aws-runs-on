@@ -147,12 +147,3 @@ module "runs_on" {
   enable_cache_isolation                     = var.enable_cache_isolation
   enable_stickydisk_isolation                = var.enable_stickydisk_isolation
 }
-
-# RunsOn appends suffixes of up to 33 characters (e.g. "-github-runner-cache-refresh-role") to the stack
-# name in IAM role names, which AWS caps at 64 characters.
-check "stack_name_length" {
-  assert {
-    condition     = !local.enabled || length(module.this.id) <= 31
-    error_message = "The label ID (${module.this.id}) must be 31 characters or fewer, or RunsOn IAM role names exceed 64 characters. Shorten it with `name` or `id_length_limit`."
-  }
-}

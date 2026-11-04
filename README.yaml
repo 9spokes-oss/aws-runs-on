@@ -123,7 +123,7 @@ usage: |
   | `parameters.EmailAddress` | `email` |
   | `parameters.Private` | `private_mode` |
   | `parameters.SSHAllowed` | `ssh_allowed` |
-  | `parameters.EncryptEbs` | `ebs_encryption_key_id` |
+  | `parameters.EncryptEbs: true` | `ebs_encryption_key_id: alias/aws/ebs` |
   | `parameters.Ec2LogRetentionInDays` | `log_retention_days` |
   | `subnet_ids` | `public_subnet_ids` |
   | `security_group_id` | `security_group_ids` |

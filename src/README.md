@@ -262,16 +262,15 @@ The ECR policy that v2.x attached to runner instances is still attached by defau
 ## References
 
 
-- [RunsOn](https://runs-on.com/) - 
+- [RunsOn](https://runs-on.com/) -
 
-- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) - 
+- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) -
 
-- [RunsOn Changelog](https://runs-on.com/changelog/) - 
+- [RunsOn Changelog](https://runs-on.com/changelog/) -
 
-- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) - 
+- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) -
 
 
 
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-runs-on&utm_content=)
-

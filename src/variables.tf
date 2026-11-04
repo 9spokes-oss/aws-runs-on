@@ -53,7 +53,6 @@ variable "vpc_id" {
 variable "public_subnet_ids" {
   description = "List of public subnet IDs for runner instances. Required unless private_mode is \"only\"."
   type        = list(string)
-  default     = []
 }
 
 variable "private_subnet_ids" {

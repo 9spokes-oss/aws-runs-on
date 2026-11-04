@@ -324,10 +324,10 @@ Check out these related projects.
 
 For additional context, refer to some of these links.
 
-- [RunsOn](https://runs-on.com/) - 
-- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) - 
-- [RunsOn Changelog](https://runs-on.com/changelog/) - 
-- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) - 
+- [RunsOn](https://runs-on.com/) -
+- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) -
+- [RunsOn Changelog](https://runs-on.com/changelog/) -
+- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) -
 
 
 
@@ -369,7 +369,7 @@ For additional context, refer to some of these links.
 > - **Customer Workshops.** Engage with our team in weekly workshops, gaining insights and strategies to continuously improve and innovate.
 >
 > <a href="https://cpco.io/commercial-support?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-runs-on&utm_content=commercial_support"><img alt="Request Quote" src="https://img.shields.io/badge/request%20quote-success.svg?style=for-the-badge"/></a>
-> 
+>
 </details>
 
 ## ✨ Contributing

@@ -141,7 +141,7 @@ replaces the RunsOn installation:
 | `parameters.EmailAddress` | `email` |
 | `parameters.Private` | `private_mode` |
 | `parameters.SSHAllowed` | `ssh_allowed` |
-| `parameters.EncryptEbs` | `ebs_encryption_key_id` |
+| `parameters.EncryptEbs: true` | `ebs_encryption_key_id: alias/aws/ebs` |
 | `parameters.Ec2LogRetentionInDays` | `log_retention_days` |
 | `subnet_ids` | `public_subnet_ids` |
 | `security_group_id` | `security_group_ids` |
@@ -179,13 +179,14 @@ The ECR policy that v2.x attached to runner instances is still attached by defau
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.45.0, < 7.0.0 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
 | <a name="module_iam_policy"></a> [iam\_policy](#module\_iam\_policy) | cloudposse/iam-policy/aws | 2.0.2 |
-| <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../account-map/modules/iam-roles | n/a |
+| <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | cloudposse/label/null | 0.25.0 |
 | <a name="module_runs_on"></a> [runs\_on](#module\_runs\_on) | runs-on/runs-on/aws//modules/flex | v3.6.0 |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
@@ -193,12 +194,16 @@ The ECR policy that v2.x attached to runner instances is still attached by defau
 
 | Name | Type |
 | ---- | ---- |
+| [terraform_data.account_verification](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
+| [aws_caller_identity.account_verification](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_ssm_parameter.license_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_account_map"></a> [account\_map](#input\_account\_map) | Map of account names (tenant-stage format) to account IDs. Used to verify we're targeting the correct AWS account. Optional attributes support component-specific functionality (e.g., audit\_account\_account\_name for cloudtrail, root\_account\_account\_name for aws-sso). | <pre>object({<br/>    full_account_map              = map(string)<br/>    audit_account_account_name    = optional(string, "")<br/>    root_account_account_name     = optional(string, "")<br/>    identity_account_account_name = optional(string, "")<br/>    aws_partition                 = optional(string, "aws")<br/>    iam_role_arn_templates        = optional(map(string), {})<br/>  })</pre> | <pre>{<br/>  "audit_account_account_name": "",<br/>  "aws_partition": "aws",<br/>  "full_account_map": {},<br/>  "iam_role_arn_templates": {},<br/>  "identity_account_account_name": "",<br/>  "root_account_account_name": ""<br/>}</pre> | no |
+| <a name="input_account_map_enabled"></a> [account\_map\_enabled](#input\_account\_map\_enabled) | Enable the account map component | `bool` | `false` | no |
 | <a name="input_additional_tag_map"></a> [additional\_tag\_map](#input\_additional\_tag\_map) | Additional key-value pairs to add to each map in `tags_as_list_of_maps`. Not added to `tags` or `id`.<br/>This is for some rare cases where resources want additional configuration of tags<br/>and therefore take a list of maps with tag key, value, and additional configuration. | `map(string)` | `{}` | no |
 | <a name="input_alert_slack_webhook_url"></a> [alert\_slack\_webhook\_url](#input\_alert\_slack\_webhook\_url) | Slack webhook URL for alert notifications (optional) | `string` | `""` | no |
 | <a name="input_app_budget_daily_usd"></a> [app\_budget\_daily\_usd](#input\_app\_budget\_daily\_usd) | Daily AWS cost budget in USD for this stack, filtered by the configured cost allocation tag. Set to 0 to disable the budget. For AWS Organizations member accounts, activate the cost allocation tag in the management account's Billing settings. | `number` | `10` | no |
@@ -274,7 +279,7 @@ The ECR policy that v2.x attached to runner instances is still attached by defau
 | <a name="input_private_mode_delay"></a> [private\_mode\_delay](#input\_private\_mode\_delay) | Delay before starting the worker service in private mode, to allow NAT gateways to become ready. Set to "60s" or higher for fresh NAT gateway deployments. | `string` | `"0s"` | no |
 | <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | List of private subnet IDs for runner instances (required if private\_mode is not 'false') | `list(string)` | `[]` | no |
 | <a name="input_public_ingress_web_acl_arn"></a> [public\_ingress\_web\_acl\_arn](#input\_public\_ingress\_web\_acl\_arn) | Optional user-managed AWS WAFv2 Web ACL ARN to associate with the public ingress. When set, RunsOn will not manage webhook IP synchronization. | `string` | `""` | no |
-| <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | List of public subnet IDs for runner instances. Required unless private\_mode is "only". | `list(string)` | `[]` | no |
+| <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | List of public subnet IDs for runner instances. Required unless private\_mode is "only". | `list(string)` | n/a | yes |
 | <a name="input_regex_replace_chars"></a> [regex\_replace\_chars](#input\_regex\_replace\_chars) | Terraform regular expression (regex) string.<br/>Characters matching the regex will be removed from the ID elements.<br/>If not set, `"/[^a-zA-Z0-9-]/"` is used to remove all characters other than hyphens, letters and digits. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS Region | `string` | n/a | yes |
 | <a name="input_runner_config_auto_extends_from"></a> [runner\_config\_auto\_extends\_from](#input\_runner\_config\_auto\_extends\_from) | Repository whose .github/runs-on.yml every repository config extends, replacing any \_extends it declares. Set to "." to use each repository's own \_extends | `string` | `".github-private"` | no |
@@ -324,10 +329,10 @@ Check out these related projects.
 
 For additional context, refer to some of these links.
 
-- [RunsOn](https://runs-on.com/) -
-- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) -
-- [RunsOn Changelog](https://runs-on.com/changelog/) -
-- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) -
+- [RunsOn](https://runs-on.com/) - 
+- [RunsOn Flex Terraform module](https://github.com/runs-on/terraform-aws-runs-on/tree/main/modules/flex) - 
+- [RunsOn Changelog](https://runs-on.com/changelog/) - 
+- [RunsOn job labels](https://runs-on.com/configuration/job-labels/) - 
 
 
 
@@ -369,7 +374,7 @@ For additional context, refer to some of these links.
 > - **Customer Workshops.** Engage with our team in weekly workshops, gaining insights and strategies to continuously improve and innovate.
 >
 > <a href="https://cpco.io/commercial-support?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-runs-on&utm_content=commercial_support"><img alt="Request Quote" src="https://img.shields.io/badge/request%20quote-success.svg?style=for-the-badge"/></a>
->
+> 
 </details>
 
 ## ✨ Contributing

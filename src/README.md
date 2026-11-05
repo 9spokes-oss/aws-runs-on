@@ -30,7 +30,7 @@ configuration:
 aws ssm put-parameter --name /runs-on/license-key --type SecureString --value "<LICENSE_KEY>"
 ```
 
-(`runs-on/defaults.yaml`)
+(`stacks/catalog/runs-on/defaults.yaml`)
 
 ```yaml
 components:

@@ -131,8 +131,8 @@ usage: |
   | `capabilities`, `on_failure`, `timeout_in_minutes`, `policy_body` | removed |
   | outputs `vpc_id`, `vpc_cidr`, `*_subnet_ids`, `nat_*`, `private_route_table_ids` | removed; read them from the VPC component |
 
-  The ECR policy that v2.x attached to runner instances is still attached by default. Set
-  `ecr_iam_policy_enabled: false` when workflows reach ECR through their own (for example OIDC) role.
+  v2.x attached an account-wide ECR policy (push, delete, lifecycle) to every runner instance by default. It is now
+  opt-in: set `ecr_iam_policy_enabled: true` to keep it, or give workflows their own (for example OIDC) role.
 
 references:
   - name: RunsOn

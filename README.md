@@ -149,8 +149,8 @@ replaces the RunsOn installation:
 | `capabilities`, `on_failure`, `timeout_in_minutes`, `policy_body` | removed |
 | outputs `vpc_id`, `vpc_cidr`, `*_subnet_ids`, `nat_*`, `private_route_table_ids` | removed; read them from the VPC component |
 
-The ECR policy that v2.x attached to runner instances is still attached by default. Set
-`ecr_iam_policy_enabled: false` when workflows reach ECR through their own (for example OIDC) role.
+v2.x attached an account-wide ECR policy (push, delete, lifecycle) to every runner instance by default. It is now
+opt-in: set `ecr_iam_policy_enabled: true` to keep it, or give workflows their own (for example OIDC) role.
 
 
 > [!IMPORTANT]
@@ -224,7 +224,7 @@ The ECR policy that v2.x attached to runner instances is still attached by defau
 | <a name="input_delimiter"></a> [delimiter](#input\_delimiter) | Delimiter to be used between ID elements.<br/>Defaults to `-` (hyphen). Set to `""` to use no delimiter at all. | `string` | `null` | no |
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br/>Map of maps. Keys are names of descriptors. Values are maps of the form<br/>`{<br/>  format = string<br/>  labels = list(string)<br/>}`<br/>(Type is `any` so the map values can later be enhanced to provide additional options.)<br/>`format` is a Terraform format string to be passed to the `format()` function.<br/>`labels` is a list of labels, in order, to pass to `format()` function.<br/>Label values will be normalized before being passed to `format()` so they will be<br/>identical to how they appear in `id`.<br/>Default is `{}` (`descriptors` output will be empty). | `any` | `{}` | no |
 | <a name="input_ebs_encryption_key_id"></a> [ebs\_encryption\_key\_id](#input\_ebs\_encryption\_key\_id) | KMS key ID for explicit EBS volume encryption. Leave empty to omit explicit EBS encryption fields, use alias/aws/ebs for the AWS-managed EBS key, or provide a customer-managed key ID, alias, or ARN. Prefer a full ARN for customer-managed keys, especially cross-account keys. Customer-managed keys must also trust the generated RunsOn worker task role in their key policy. | `string` | `""` | no |
-| <a name="input_ecr_iam_policy_enabled"></a> [ecr\_iam\_policy\_enabled](#input\_ecr\_iam\_policy\_enabled) | Attach a policy to the runner instance role that allows pushing to and pulling from any ECR repository in the account. | `bool` | `true` | no |
+| <a name="input_ecr_iam_policy_enabled"></a> [ecr\_iam\_policy\_enabled](#input\_ecr\_iam\_policy\_enabled) | Attach a policy to the runner instance role that allows pushing, pulling, retagging and deleting images in any ECR repository in the account. Every job on every runner gets it, so prefer per-workflow OIDC roles. | `bool` | `false` | no |
 | <a name="input_ecr_pull_through_cache_rules"></a> [ecr\_pull\_through\_cache\_rules](#input\_ecr\_pull\_through\_cache\_rules) | Existing ECR pull-through cache rules to reference for runner image pulls. Create or import the regional rules outside the RunsOn module. | <pre>map(object({<br/>    ecr_repository_prefix      = string<br/>    upstream_registry_url      = string<br/>    upstream_repository_prefix = optional(string)<br/>  }))</pre> | `{}` | no |
 | <a name="input_email"></a> [email](#input\_email) | Email address for alerts and notifications (requires confirmation) | `string` | n/a | yes |
 | <a name="input_enable_admin_routes"></a> [enable\_admin\_routes](#input\_enable\_admin\_routes) | Enable the admin Lambda routes (`/`, `/setup`, `/setup/{proxy+}`, `/readyz`) on the public ingress | `bool` | `true` | no |

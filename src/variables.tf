@@ -11,8 +11,8 @@ variable "license_key_ssm_parameter_name" {
 
 variable "ecr_iam_policy_enabled" {
   type        = bool
-  description = "Attach a policy to the runner instance role that allows pushing to and pulling from any ECR repository in the account."
-  default     = true
+  description = "Attach a policy to the runner instance role that allows pushing, pulling, retagging and deleting images in any ECR repository in the account. Every job on every runner gets it, so prefer per-workflow OIDC roles."
+  default     = false
 }
 
 variable "runs_on_environment" {

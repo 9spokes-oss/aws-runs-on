@@ -42,15 +42,17 @@ locals {
   # Current AWS account ID from the active credentials (via Atmos Auth or AWS provider)
   current_account_id = data.aws_caller_identity.account_verification.account_id
 
-  # Determine if validation should be performed based on three conditions:
-  # 1. account_map_enabled is false, i.e. Atmos Auth supplies the credentials
-  # 2. account_map.full_account_map is provided and not empty
-  # 3. Expected account name can be constructed from tenant and stage
+  # Determine if validation should be performed based on four conditions:
+  # 1. The component is enabled, so `enabled = false` creates nothing
+  # 2. account_map_enabled is false, i.e. Atmos Auth supplies the credentials
+  # 3. account_map.full_account_map is provided and not empty
+  # 4. Expected account name can be constructed from tenant and stage
   #
   # A missing entry for the expected account name does NOT skip validation. A populated
   # map without this account is treated as a configuration error and fails the plan,
   # so that a typo in the map cannot silently disable the check.
   should_validate = (
+    module.this.enabled &&
     !var.account_map_enabled &&
     length(var.account_map.full_account_map) > 0 &&
     local.expected_account_name != null

@@ -101,6 +101,24 @@ usage: |
   atmos terraform output runs-on -s <stack> --skip-init -- -raw getting_started
   ```
 
+  The admin routes (`/`, `/setup`, `/setup/{proxy+}`, `/readyz`) have no sign-in. Once the GitHub App is registered,
+  turn them off in the stack and apply:
+
+  ```yaml
+        vars:
+          enable_waf: true           # webhooks accept only GitHub's IPs, synced hourly
+          enable_admin_routes: false
+  ```
+
+  The deployed API Gateway stage keeps the removed routes until the deployment is replaced
+  ([runs-on/terraform-aws-runs-on#76](https://github.com/runs-on/terraform-aws-runs-on/issues/76)), so replace it
+  once and check that `/setup` returns 403:
+
+  ```shell
+  atmos terraform apply runs-on -s <stack> -- \
+    -replace='module.runs_on[0].module.control_plane.aws_api_gateway_deployment.public_ingress'
+  ```
+
   Inputs mirror the RunsOn Flex module's, with two exceptions: `stack_name` and `tags` come from the Cloud Posse
   label context (`module.this.id` and `module.this.tags`), and the module's `environment` input is
   `runs_on_environment`, because `environment` is a context label.

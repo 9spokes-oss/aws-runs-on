@@ -144,11 +144,15 @@ label context (`module.this.id` and `module.this.tags`), and the module's `envir
 ### Migrating from the CloudFormation-based component (v2.x)
 
 Version 3 is a breaking change. Terraform cannot adopt resources owned by a CloudFormation stack, so migrating
-replaces the RunsOn installation:
+replaces the RunsOn installation. Atmos keys Terraform state by the component key, so the new install needs its own
+key; reusing the old key would put both installations in one state, and the first apply would destroy the old one:
 
-1. Deploy this version as a new component instance (a different `name`) next to the existing stack.
+1. Add this version under a new component key (for example `runs-on-v3`) with a different `name`, so resource
+   names don't collide, and apply it next to the existing one. Keep the old key on its v2.x `component.yaml` pin
+   (vendor v3 into a separate component directory) until step 3.
 2. Register its GitHub App, then move workflows to it.
-3. Destroy the old CloudFormation-based instance.
+3. Destroy the old CloudFormation-based component (`atmos terraform destroy <old key> -s <stack>`), then remove it
+   from the stack.
 
 | v2.x | v3 |
 |------|----|

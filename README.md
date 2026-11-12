@@ -209,7 +209,7 @@ opt-in: set `ecr_iam_policy_enabled: true` to keep it, or give workflows their o
 | ---- | ------ | ------- |
 | <a name="module_iam_policy"></a> [iam\_policy](#module\_iam\_policy) | cloudposse/iam-policy/aws | 2.0.2 |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | cloudposse/label/null | 0.25.0 |
-| <a name="module_runs_on"></a> [runs\_on](#module\_runs\_on) | git::https://github.com/9spokes-oss/terraform-aws-runs-on.git//modules/flex | d47976dfadfe7f837100f8802d08d398cb36d451 |
+| <a name="module_runs_on"></a> [runs\_on](#module\_runs\_on) | git::https://github.com/9spokes-oss/terraform-aws-runs-on.git//modules/flex | dbff3269d4d93b66b8b756e8d01a956139a8a31e |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources

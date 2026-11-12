@@ -68,8 +68,9 @@ module "iam_policy" {
 module "runs_on" {
   count = local.enabled ? 1 : 0
 
-  source  = "runs-on/runs-on/aws//modules/flex"
-  version = "v3.6.0"
+  # RunsOn v3.6.0 plus two unreleased patches (no public IP on the default launch templates with private_mode "only";
+  # runs-on/terraform-aws-runs-on#74). Back to runs-on/runs-on/aws//modules/flex once a RunsOn release ships both.
+  source = "git::https://github.com/9spokes-oss/terraform-aws-runs-on.git//modules/flex?ref=d47976dfadfe7f837100f8802d08d398cb36d451"
 
   stack_name = module.this.id
   tags       = module.this.tags
